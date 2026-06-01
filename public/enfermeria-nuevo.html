@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Enfermería — Día Preventivo IAPOS</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .card-container {
+            max-width: 820px;
+            margin: 0 auto;
+            padding: 32px 16px 48px;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex flex-col min-h-screen">
+
+    <!-- HEADER -->
+    <header class="bg-blue-600 text-white shadow-lg">
+        <div class="container mx-auto px-4 py-4">
+            <div class="flex flex-col md:flex-row justify-between items-center space-y-4 md:space-y-0">
+                <div class="flex items-center space-x-4">
+                    <div class="bg-blue-500 rounded-full p-2">
+                        <img src="images/logo_iapos.png" alt="Logo IAPOS" class="h-20"> 
+                    </div>
+                    <h1 class="text-xl font-bold">Enfermería — Día Preventivo</h1>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN -->
+    <main class="flex-grow">
+        <div class="card-container">
+
+            <!-- BIENVENIDA -->
+            <div class="bg-blue-600 text-white rounded-xl shadow-lg p-6 mb-6">
+                <h2 class="text-lg font-bold mb-3 flex items-center">
+                    <i class="fas fa-user-nurse mr-3 text-blue-200"></i>
+                    Bienvenida al módulo de Enfermería
+                </h2>
+                <p class="text-blue-100 text-sm leading-relaxed mb-3">
+                    El rol de enfermería es <strong class="text-white">esencial</strong> en el Día Preventivo. 
+                    Su trabajo es el primer contacto clínico del afiliado y constituye la base sobre la que 
+                    el equipo de salud construye su intervención preventiva.
+                </p>
+                <p class="text-blue-100 text-sm leading-relaxed mb-4">
+                    Gracias a su dedicación, cada persona que llega al programa recibe una atención cálida, 
+                    profesional y comprometida con la salud en todas las etapas de la vida.
+                </p>
+                <ul class="text-blue-100 text-sm space-y-2">
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-300 mt-0.5 mr-2 flex-shrink-0"></i>
+                        Registro de peso, talla y circunferencia de cintura
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-300 mt-0.5 mr-2 flex-shrink-0"></i>
+                        Medición de presión arterial en ambos brazos
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-300 mt-0.5 mr-2 flex-shrink-0"></i>
+                        Evaluación de agudeza visual
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-300 mt-0.5 mr-2 flex-shrink-0"></i>
+                        Control del esquema de vacunación
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-300 mt-0.5 mr-2 flex-shrink-0"></i>
+                        Registro de espirometría cuando corresponde
+                    </li>
+                    <li class="flex items-start">
+                        <i class="fas fa-check-circle text-blue-300 mt-0.5 mr-2 flex-shrink-0"></i>
+                        Educación y consejería sobre prevención en todas las etapas de la vida
+                    </li>
+                </ul>
+            </div>
+
+            <!-- LOGIN -->
+            <div class="bg-white rounded-xl shadow-lg p-6 border border-blue-100">
+                <h3 class="text-lg font-bold text-blue-800 mb-5 flex items-center">
+                    <i class="fas fa-lock mr-2 text-blue-400"></i>
+                    Acceso al sistema
+                </h3>
+
+                <div class="mb-4">
+                    <label for="usuario" class="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
+                    <input type="text" id="usuario" placeholder="Ingresá tu usuario"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+
+                <div class="mb-6">
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
+                    <input type="password" id="password" placeholder="Ingresá tu contraseña"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm">
+                </div>
+
+                <button onclick="alert('Login en implementación. Usá el acceso directo por ahora.')"
+                    class="w-full flex justify-center items-center py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 transition duration-150 mb-4">
+                    <i class="fas fa-sign-in-alt mr-2"></i> Ingresar
+                </button>
+
+                <div class="relative my-4">
+                    <div class="absolute inset-0 flex items-center">
+                        <div class="w-full border-t border-gray-200"></div>
+                    </div>
+                    <div class="relative flex justify-center text-xs">
+                        <span class="px-2 bg-white text-gray-400">o acceso directo durante implementación</span>
+                    </div>
+                </div>
+
+                <a href="formulario-enfermeria.html"
+                    class="w-full flex justify-center items-center py-2 px-4 border-2 border-blue-600 rounded-lg text-sm font-medium text-blue-600 hover:bg-blue-50 transition duration-150">
+                    <i class="fas fa-notes-medical mr-2"></i> Ir al formulario de enfermería
+                </a>
+
+                <p class="text-xs text-center text-gray-400 mt-4">El sistema de login estará disponible próximamente.</p>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="text-center text-sm text-gray-500 py-4">
+        <p>&copy; 2025 IAPOS. Programa Día Preventivo de la Salud.</p>
+    </footer>
+
+</body>
+</html>
