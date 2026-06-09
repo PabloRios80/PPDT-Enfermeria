@@ -60,6 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
             DNI: dni,
             Nombre: nombre,
             Apellido: apellido,
+            'Nombre Enfermera': document.getElementById('nombre_enfermera').value,
             ...formValues,
         };
         
@@ -160,4 +161,10 @@ dniInput.addEventListener('blur', async function() {
     // Muestra el formulario directamente, sin buscar DNI
     form.classList.remove('hidden');
     showStep(0);
+    const enfermeraInput = document.getElementById('nombre_enfermera');
+if (window.dpProfesional && enfermeraInput) {
+    enfermeraInput.value = window.dpProfesional;
+    enfermeraInput.setAttribute('readonly', true);
+    enfermeraInput.classList.add('bg-gray-100');
+}
 });

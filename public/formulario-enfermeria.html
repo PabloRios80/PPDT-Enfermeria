@@ -7,6 +7,18 @@
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script>
+    (function() {
+    const params = new URLSearchParams(window.location.search);
+    const token = params.get('token');
+    if (!token) { window.location.href = 'https://acceso.diapreventivoiapos.com'; return; }
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+      if (Date.now() >= payload.exp * 1000) { window.location.href = 'https://acceso.diapreventivoiapos.com'; return; }
+        window.dpProfesional = payload.nombre;
+    } catch(e) { window.location.href = 'https://acceso.diapreventivoiapos.com'; }
+    })();
+</script>
 </head>
 <body class="bg-gray-100 flex flex-col min-h-screen">
 
@@ -30,24 +42,28 @@
     <main class="flex-grow flex items-center justify-center py-8">
         <div class="container mx-auto p-6 bg-white rounded-xl shadow-lg max-w-2x1 border border-blue-200">
             <h2 class="text-2xl font-bold text-blue-800 mb-6 text-center">Datos del Paciente y Carga</h2>
-
-            <div id="patient-info-display" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                <div>
-                    <label for="dni" class="block text-gray-700 text-sm font-bold mb-2">DNI:</label>
-                    <input type="text" id="dni" name="DNI" autocomplete="off" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
-                </div>
-                <div>
-                    <label for="nombre" class="block text-gray-700 text-sm font-bold mb-2">Nombre:</label>
-                    <input type="text" id="nombre" name="Nombre" autocomplete="off" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
-                </div>
-                <div>
-                    <label for="apellido" class="block text-gray-700 text-sm font-bold mb-2">Apellido:</label>
-                    <input type="text" id="apellido" name="Apellido" autocomplete="off" required
-                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
-                </div>
-                </div>
+        <div id="patient-info-display" class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+            <div>
+                <label for="dni" class="block text-gray-700 text-sm font-bold mb-2">DNI:</label>
+                <input type="text" id="dni" name="DNI" autocomplete="off" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+            </div>
+            <div>
+                <label for="nombre_enfermera" class="block text-gray-700 text-sm font-bold mb-2">Enfermera/o a cargo:</label>
+                <input type="text" id="nombre_enfermera" name="Nombre Enfermera"
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm bg-gray-100">
+            </div>
+            <div>
+                <label for="nombre" class="block text-gray-700 text-sm font-bold mb-2">Nombre:</label>
+                <input type="text" id="nombre" name="Nombre" autocomplete="off" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+            </div>
+            <div>
+                <label for="apellido" class="block text-gray-700 text-sm font-bold mb-2">Apellido:</label>
+                <input type="text" id="apellido" name="Apellido" autocomplete="off" required
+                    class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm sm:text-sm">
+            </div>
+        </div>
 
             <form id="enfermeriaForm" class="mt-8">
                 <div class="w-full bg-blue-100 rounded-full h-2.5 mb-8">
