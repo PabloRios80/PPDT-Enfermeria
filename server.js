@@ -15,6 +15,7 @@ const supabase = createClient(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static(path.join(__dirname, 'public')));
+console.log('Sirviendo estáticos desde:', path.join(__dirname, 'public'));
 
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
 
