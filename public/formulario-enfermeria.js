@@ -97,7 +97,13 @@ document.addEventListener("DOMContentLoaded", () => {
         // Mostrar sección de indicaciones
         mostrarSeccionIndicaciones(dni);
       } else {
-        alert(`Error al guardar los datos: ${result.message}`);
+        if (result.detail && result.detail.includes("duplicate")) {
+          alert(
+            "⚠️ Ya existe un registro de enfermería para este paciente en el día de hoy.",
+          );
+        } else {
+          alert(`Error al guardar los datos: ${result.message}`);
+        }
       }
     } catch (error) {
       console.error("Error:", error);
@@ -312,10 +318,12 @@ async function agregarPracticaDesdeEnfermeria(dni) {
   cargarIndicacionesEnfermeria(dni);
 }
 function finalizarEnfermeria() {
-    document.getElementById('seccion-indicaciones')?.remove();
-    document.querySelectorAll('#dniMsg, #modal-alertas-enf').forEach(el => el.remove());
-    document.getElementById('dni').value = '';
-    document.getElementById('nombre').value = '';
-    document.getElementById('apellido').value = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+  document.getElementById("seccion-indicaciones")?.remove();
+  document
+    .querySelectorAll("#dniMsg, #modal-alertas-enf")
+    .forEach((el) => el.remove());
+  document.getElementById("dni").value = "";
+  document.getElementById("nombre").value = "";
+  document.getElementById("apellido").value = "";
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }

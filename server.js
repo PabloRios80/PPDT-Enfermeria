@@ -75,6 +75,23 @@ app.post("/api/enfermeria/guardar", async (req, res) => {
     const newRow = req.body;
     newRow["Fecha_cierre_Enf"] = new Date().toLocaleDateString("es-AR");
 
+    // Verificar si ya existe registro del mismo año
+    const anioActual = new Date().getFullYear();
+    const { data: existente } = await supabase
+      .from("enfermeria_consultas")
+      .select("id, fecha_cierre_enf")
+      .eq("dni", newRow["DNI"])
+      .ilike("fecha_cierre_enf", `%${anioActual}%`)
+      .limit(1)
+      .single();
+
+    if (existente) {
+      return res.status(409).json({
+        message: `Ya existe un registro de enfermería para este paciente en ${anioActual}. Solo se puede cargar uno por año.`,
+        detail: "duplicate_year",
+      });
+    }
+
     // 1. Guardar en Supabase
     const { error } = await supabase.from("enfermeria_consultas").insert({
       dni: newRow["DNI"],
@@ -93,17 +110,14 @@ app.post("/api/enfermeria/guardar", async (req, res) => {
 
     if (error) {
       console.error("Error Supabase enfermería:", JSON.stringify(error));
-      return res
-        .status(500)
-        .json({
-          message: "Error al guardar en base de datos.",
-          detail: error.message,
-        });
+      return res.status(500).json({
+        message: "Error al guardar en base de datos.",
+        detail: error.message,
+      });
     }
 
     console.log("✅ Enfermería guardada en Supabase para DNI:", newRow["DNI"]);
 
-    // 2. Backup Google Sheets (no bloqueante)
     if (APPS_SCRIPT_URL) {
       axios
         .post(APPS_SCRIPT_URL, {
