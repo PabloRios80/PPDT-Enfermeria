@@ -240,17 +240,7 @@ async function mostrarSeccionIndicaciones(dni) {
     <div id="lista-indicaciones-enf" style="margin-bottom:16px;">
         <p style="color:#999; text-align:center;">Cargando prácticas...</p>
     </div>
-    <div style="border-top:1px solid #e5e7eb; padding-top:16px;">
-        <p style="font-weight:700; font-size:13px; color:#374151; margin-bottom:8px;">Agregar práctica:</p>
-        <div style="display:flex; gap:8px;">
-            <input type="text" id="nueva-practica-enf" placeholder="Descripción de la práctica..."
-                style="flex:1; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:13px; outline:none;">
-            <button onclick="agregarPracticaDesdeEnfermeria('${dni}')"
-                style="background:#16a34a; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;">
-                + Agregar
-            </button>
-        </div>
-    </div>
+    
     <div style="margin-top:20px; text-align:center;">
         <button onclick="finalizarEnfermeria()"
             style="background:#014189; color:white; border:none; padding:12px 32px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px;">
