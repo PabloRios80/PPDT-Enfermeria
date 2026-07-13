@@ -83,6 +83,17 @@ document.addEventListener("DOMContentLoaded", () => {
           console.warn("No se pudo actualizar tablero:", e.message);
         }
 
+        // Mostrar mensaje de éxito
+        const msgExito = document.createElement("div");
+        msgExito.style.cssText =
+          "background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:12px 16px; margin-top:16px; color:#15803d; font-weight:700; font-size:14px; text-align:center;";
+        msgExito.innerHTML = "✅ Datos de enfermería guardados correctamente.";
+        document.querySelector("main .container").appendChild(msgExito);
+
+        form.reset();
+        currentStep = 0;
+        showStep(currentStep);
+
         // Mostrar sección de indicaciones
         mostrarSeccionIndicaciones(dni);
       } else {
@@ -206,82 +217,105 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 async function mostrarSeccionIndicaciones(dni) {
-    // Crear sección si no existe
-    let seccion = document.getElementById('seccion-indicaciones');
-    if (!seccion) {
-        seccion = document.createElement('div');
-        seccion.id = 'seccion-indicaciones';
-        seccion.style.cssText = 'margin-top:24px; background:white; border-radius:12px; padding:20px; border:2px solid #3b82f6;';
-        document.querySelector('main .container').appendChild(seccion);
-    }
+  // Crear sección si no existe
+  let seccion = document.getElementById("seccion-indicaciones");
+  if (!seccion) {
+    seccion = document.createElement("div");
+    seccion.id = "seccion-indicaciones";
+    seccion.style.cssText =
+      "margin-top:24px; background:white; border-radius:12px; padding:20px; border:2px solid #3b82f6;";
+    document.querySelector("main .container").appendChild(seccion);
+  }
 
-    seccion.innerHTML = `
-        <h3 style="color:#1d4ed8; font-weight:700; margin-bottom:16px; font-size:16px;">
-            📋 Indicaciones para prestadores externos — DNI ${dni}
-        </h3>
-        <div id="lista-indicaciones-enf" style="margin-bottom:16px;">
-            <p style="color:#999; text-align:center;">Cargando prácticas...</p>
+  seccion.innerHTML = `
+    <h3 style="color:#1d4ed8; font-weight:700; margin-bottom:16px; font-size:16px;">
+        📋 Indicaciones para prestadores externos — DNI ${dni}
+    </h3>
+    <div id="lista-indicaciones-enf" style="margin-bottom:16px;">
+        <p style="color:#999; text-align:center;">Cargando prácticas...</p>
+    </div>
+    <div style="border-top:1px solid #e5e7eb; padding-top:16px;">
+        <p style="font-weight:700; font-size:13px; color:#374151; margin-bottom:8px;">Agregar práctica:</p>
+        <div style="display:flex; gap:8px;">
+            <input type="text" id="nueva-practica-enf" placeholder="Descripción de la práctica..."
+                style="flex:1; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:13px; outline:none;">
+            <button onclick="agregarPracticaDesdeEnfermeria('${dni}')"
+                style="background:#16a34a; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;">
+                + Agregar
+            </button>
         </div>
-        <div style="border-top:1px solid #e5e7eb; padding-top:16px;">
-            <p style="font-weight:700; font-size:13px; color:#374151; margin-bottom:8px;">Agregar práctica:</p>
-            <div style="display:flex; gap:8px;">
-                <input type="text" id="nueva-practica-enf" placeholder="Descripción de la práctica..."
-                    style="flex:1; padding:8px 12px; border:1px solid #d1d5db; border-radius:8px; font-size:13px; outline:none;">
-                <button onclick="agregarPracticaDesdeEnfermeria('${dni}')"
-                    style="background:#16a34a; color:white; border:none; padding:8px 16px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;">
-                    + Agregar
-                </button>
-            </div>
-        </div>`;
+    </div>
+    <div style="margin-top:20px; text-align:center;">
+        <button onclick="finalizarEnfermeria()"
+            style="background:#014189; color:white; border:none; padding:12px 32px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px;">
+            ✓ Finalizar y atender próximo paciente
+        </button>
+    </div>`;
 
-    await cargarIndicacionesEnfermeria(dni);
-    seccion.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  await cargarIndicacionesEnfermeria(dni);
+  seccion.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 async function cargarIndicacionesEnfermeria(dni) {
-    const lista = document.getElementById('lista-indicaciones-enf');
-    try {
-        const res = await fetch(`/api/practicas-indicaciones/${dni}`);
-        const data = await res.json();
-        const practicas = data.practicas || [];
+  const lista = document.getElementById("lista-indicaciones-enf");
+  try {
+    const res = await fetch(`/api/practicas-indicaciones/${dni}`);
+    const data = await res.json();
+    const practicas = data.practicas || [];
 
-        if (practicas.length === 0) {
-            lista.innerHTML = '<p style="color:#999; text-align:center; font-size:13px;">No hay prácticas externas autorizadas para este paciente.</p>';
-            return;
-        }
+    if (practicas.length === 0) {
+      lista.innerHTML =
+        '<p style="color:#999; text-align:center; font-size:13px;">No hay prácticas externas autorizadas para este paciente.</p>';
+      return;
+    }
 
-        lista.innerHTML = practicas.map(p => `
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid ${p.indicacion_entregada ? '#86efac' : '#e5e7eb'}; border-radius:8px; margin-bottom:8px; background:${p.indicacion_entregada ? '#f0fdf4' : '#f9fafb'};">
-                <span style="font-size:13px; color:${p.indicacion_entregada ? '#15803d' : '#374151'}; font-weight:${p.indicacion_entregada ? '700' : '400'};">
+    lista.innerHTML = practicas
+      .map(
+        (p) => `
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px; border:1px solid ${p.indicacion_entregada ? "#86efac" : "#e5e7eb"}; border-radius:8px; margin-bottom:8px; background:${p.indicacion_entregada ? "#f0fdf4" : "#f9fafb"};">
+                <span style="font-size:13px; color:${p.indicacion_entregada ? "#15803d" : "#374151"}; font-weight:${p.indicacion_entregada ? "700" : "400"};">
                     ${p.descripcion_practica}
                 </span>
                 <button onclick="marcarIndicacionEnfermeria(${p.id}, ${!p.indicacion_entregada}, '${dni}')"
-                    style="font-size:12px; padding:5px 12px; border-radius:20px; font-weight:700; border:none; cursor:pointer; background:${p.indicacion_entregada ? '#dcfce7' : '#e5e7eb'}; color:${p.indicacion_entregada ? '#15803d' : '#6b7280'};">
-                    ${p.indicacion_entregada ? '✓ Entregada' : 'Marcar'}
+                    style="font-size:12px; padding:5px 12px; border-radius:20px; font-weight:700; border:none; cursor:pointer; background:${p.indicacion_entregada ? "#dcfce7" : "#e5e7eb"}; color:${p.indicacion_entregada ? "#15803d" : "#6b7280"};">
+                    ${p.indicacion_entregada ? "✓ Entregada" : "Marcar"}
                 </button>
-            </div>`).join('');
-    } catch(e) {
-        lista.innerHTML = '<p style="color:red; text-align:center; font-size:13px;">Error al cargar prácticas.</p>';
-    }
+            </div>`,
+      )
+      .join("");
+  } catch (e) {
+    lista.innerHTML =
+      '<p style="color:red; text-align:center; font-size:13px;">Error al cargar prácticas.</p>';
+  }
 }
 
 async function marcarIndicacionEnfermeria(id, valor, dni) {
-    await fetch(`/api/indicacion-practica/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ indicacion_entregada: valor })
-    });
-    cargarIndicacionesEnfermeria(dni);
+  await fetch(`/api/indicacion-practica/${id}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ indicacion_entregada: valor }),
+  });
+  cargarIndicacionesEnfermeria(dni);
 }
 
 async function agregarPracticaDesdeEnfermeria(dni) {
-    const descripcion = document.getElementById('nueva-practica-enf').value.trim();
-    if (!descripcion) return alert('Ingresá la descripción de la práctica.');
-    await fetch('/api/agregar-practica-enfermeria', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ dni, descripcion_practica: descripcion })
-    });
-    document.getElementById('nueva-practica-enf').value = '';
-    cargarIndicacionesEnfermeria(dni);
+  const descripcion = document
+    .getElementById("nueva-practica-enf")
+    .value.trim();
+  if (!descripcion) return alert("Ingresá la descripción de la práctica.");
+  await fetch("/api/agregar-practica-enfermeria", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ dni, descripcion_practica: descripcion }),
+  });
+  document.getElementById("nueva-practica-enf").value = "";
+  cargarIndicacionesEnfermeria(dni);
+}
+function finalizarEnfermeria() {
+    document.getElementById('seccion-indicaciones')?.remove();
+    document.querySelectorAll('#dniMsg, #modal-alertas-enf').forEach(el => el.remove());
+    document.getElementById('dni').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('apellido').value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
