@@ -241,7 +241,7 @@ async function mostrarSeccionIndicaciones(dni) {
 async function cargarIndicacionesEnfermeria(dni) {
     const lista = document.getElementById('lista-indicaciones-enf');
     try {
-        const res = await fetch(`https://tablero-dia.onrender.com/api/practicas-indicaciones/${dni}`);
+        const res = await fetch(`/api/practicas-indicaciones/${dni}`);
         const data = await res.json();
         const practicas = data.practicas || [];
 
@@ -266,7 +266,7 @@ async function cargarIndicacionesEnfermeria(dni) {
 }
 
 async function marcarIndicacionEnfermeria(id, valor, dni) {
-    await fetch(`https://tablero-dia.onrender.com/api/indicacion-practica/${id}`, {
+    await fetch(`/api/indicacion-practica/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ indicacion_entregada: valor })
@@ -277,7 +277,7 @@ async function marcarIndicacionEnfermeria(id, valor, dni) {
 async function agregarPracticaDesdeEnfermeria(dni) {
     const descripcion = document.getElementById('nueva-practica-enf').value.trim();
     if (!descripcion) return alert('Ingresá la descripción de la práctica.');
-    await fetch('https://tablero-dia.onrender.com/api/agregar-practica-enfermeria', {
+    await fetch('/api/agregar-practica-enfermeria', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dni, descripcion_practica: descripcion })

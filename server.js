@@ -256,6 +256,63 @@ app.post("/api/enfermeria/actualizar-tablero", async (req, res) => {
   }
 });
 
+// Prácticas para indicaciones
+app.get('/api/practicas-indicaciones/:dni', async (req, res) => {
+    const PRACTICAS_EXTERNAS = [
+        'mamograf', 'eco mam', 'ecograf', 'vcc', 'colonoscop',
+        'densito', 'papanicolau', 'oftalmolog', 'espiromet'
+    ];
+    try {
+        const { data } = await supabase
+            .from('practicas_autorizadas')
+            .select('id, descripcion_practica, indicacion_entregada')
+            .eq('dni', req.params.dni)
+            .eq('estado', 'AUTORIZADA')
+            .order('descripcion_practica');
+        const filtradas = (data || []).filter(p =>
+            PRACTICAS_EXTERNAS.some(k => p.descripcion_practica.toLowerCase().includes(k))
+        );
+        res.json({ practicas: filtradas });
+    } catch(e) {
+        res.status(500).json({ practicas: [] });
+    }
+});
+
+// Marcar indicación
+app.patch('/api/indicacion-practica/:id', async (req, res) => {
+    try {
+        const { error } = await supabase
+            .from('practicas_autorizadas')
+            .update(req.body)
+            .eq('id', req.params.id);
+        if (error) throw error;
+        res.json({ success: true });
+    } catch(e) {
+        res.status(500).json({ success: false });
+    }
+});
+
+// Agregar práctica
+app.post('/api/agregar-practica-enfermeria', async (req, res) => {
+    try {
+        const { dni, descripcion_practica } = req.body;
+        const { error } = await supabase
+            .from('practicas_autorizadas')
+            .insert({
+                dni,
+                descripcion_practica,
+                estado: 'AUTORIZADA',
+                indicacion_entregada: true,
+                fecha_autorizacion: new Date().toISOString().split('T')[0],
+                nombre_completo: '',
+            });
+        if (error) throw error;
+        res.json({ success: true });
+    } catch(e) {
+        res.status(500).json({ success: false });
+    }
+});
+
 app.listen(PORT, () =>
   console.log(`Portal Enfermería corriendo en http://localhost:${PORT}`),
 );
