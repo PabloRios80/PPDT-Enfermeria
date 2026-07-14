@@ -285,6 +285,9 @@ app.get("/api/practicas-indicaciones/:dni", async (req, res) => {
     "papanicolau",
     "oftalmolog",
     "espiromet",
+    "hpv",
+    "somf",
+    "sangre oculta",
   ];
   try {
     const { data } = await supabase
