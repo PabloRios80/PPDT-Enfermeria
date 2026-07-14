@@ -343,13 +343,14 @@ async function finalizarEnfermeria(dni) {
   document.getElementById("dni").value = "";
   document.getElementById("nombre").value = "";
   document.getElementById("apellido").value = "";
-  document
-    .getElementById("btn-catalogo")
-    .addEventListener("click", () => abrirCatalogoPracticas(dni));
-  document
-    .getElementById("btn-finalizar")
-    .addEventListener("click", () => finalizarEnfermeria(dni));
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  setTimeout(() => {
+    document
+      .getElementById("btn-catalogo")
+      ?.addEventListener("click", () => abrirCatalogoPracticas(dni));
+    document
+      .getElementById("btn-finalizar")
+      ?.addEventListener("click", () => finalizarEnfermeria(dni));
+  }, 100);
 }
 
 function abrirCatalogoPracticas(dni) {
