@@ -232,16 +232,7 @@ async function mostrarSeccionIndicaciones(dni) {
       "margin-top:24px; background:white; border-radius:12px; padding:20px; border:2px solid #3b82f6;";
     document.querySelector("main .container").appendChild(seccion);
   }
-
-  <div style="margin-top:16px; border-top:1px solid #e5e7eb; padding-top:16px;">
-    <button
-      onclick="abrirCatalogoPracticas('${dni}')"
-      style="width:100%; background:#f0f9ff; border:2px dashed #3b82f6; color:#1d4ed8; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px;"
-    >
-      + Indicar práctica adicional
-    </button>
-  </div>;
-
+  
   seccion.innerHTML = `
     <h3 style="color:#1d4ed8; font-weight:700; margin-bottom:16px; font-size:16px;">
         📋 Indicaciones para prestadores externos — DNI ${dni}
