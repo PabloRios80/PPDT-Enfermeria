@@ -419,3 +419,7 @@ async function finalizarEnfermeria(dni) {
     .addEventListener("click", () => finalizarEnfermeria(dni));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
+window.abrirCatalogoPracticas = abrirCatalogoPracticas;
+window.guardarPracticasAdicionales = guardarPracticasAdicionales;
+window.finalizarEnfermeria = finalizarEnfermeria;
+window.marcarIndicacionEnfermeria = marcarIndicacionEnfermeria;
