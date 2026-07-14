@@ -357,18 +357,33 @@ app.post("/api/enfermeria/actualizar-extras", async (req, res) => {
 app.post("/api/agregar-practicas-adicionales", async (req, res) => {
   const { dni, practicas } = req.body;
   try {
-    const inserts = practicas.map((p) => ({
-      dni,
-      descripcion_practica: p,
-      estado: "AUTORIZADA",
-      indicacion_entregada: true,
-      fecha_autorizacion: new Date().toISOString().split("T")[0],
-      nombre_completo: "",
-    }));
-    const { error } = await supabase
-      .from("practicas_autorizadas")
-      .insert(inserts);
-    if (error) throw error;
+    for (const descripcion of practicas) {
+      // Verificar si ya existe
+      const { data: existente } = await supabase
+        .from("practicas_autorizadas")
+        .select("id")
+        .eq("dni", dni)
+        .ilike("descripcion_practica", descripcion)
+        .single();
+
+      if (existente) {
+        // Solo actualizar indicacion_entregada
+        await supabase
+          .from("practicas_autorizadas")
+          .update({ indicacion_entregada: true })
+          .eq("id", existente.id);
+      } else {
+        // Insertar nueva
+        await supabase.from("practicas_autorizadas").insert({
+          dni,
+          descripcion_practica: descripcion,
+          estado: "AUTORIZADA",
+          indicacion_entregada: true,
+          fecha_autorizacion: new Date().toISOString().split("T")[0],
+          nombre_completo: "",
+        });
+      }
+    }
     res.json({ success: true });
   } catch (e) {
     res.status(500).json({ success: false, message: e.message });
