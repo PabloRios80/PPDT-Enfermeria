@@ -337,6 +337,20 @@ app.post("/api/agregar-practica-enfermeria", async (req, res) => {
   }
 });
 
+app.post("/api/enfermeria/actualizar-extras", async (req, res) => {
+  const { dni, kit_hpv, somf } = req.body;
+  const hoy = new Date().getFullYear();
+  try {
+    await supabase
+      .from("enfermeria_consultas")
+      .update({ kit_hpv, somf })
+      .eq("dni", dni)
+      .ilike("fecha_cierre_enf", `%${hoy}%`);
+    res.json({ success: true });
+  } catch (e) {
+    res.json({ success: false });
+  }
+});
 app.listen(PORT, () =>
   console.log(`Portal Enfermería corriendo en http://localhost:${PORT}`),
 );

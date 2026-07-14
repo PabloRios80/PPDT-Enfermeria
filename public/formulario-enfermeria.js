@@ -237,6 +237,30 @@ async function mostrarSeccionIndicaciones(dni) {
     <h3 style="color:#1d4ed8; font-weight:700; margin-bottom:16px; font-size:16px;">
         📋 Indicaciones para prestadores externos — DNI ${dni}
     </h3>
+    <div style="display:flex; gap:12px; margin-bottom:16px;">
+        <label style="display:flex; align-items:center; gap:8px; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:10px 16px; cursor:pointer; flex:1;">
+            <input type="checkbox" id="check-kit-hpv" style="width:18px; height:18px;">
+            <span style="font-size:13px; font-weight:700; color:#15803d;">Entregó Kit HPV</span>
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; background:#f0fdf4; border:1px solid #86efac; border-radius:8px; padding:10px 16px; cursor:pointer; flex:1;">
+            <input type="checkbox" id="check-somf" style="width:18px; height:18px;">
+            <span style="font-size:13px; font-weight:700; color:#15803d;">Entregó SOMF</span>
+        </label>
+    </div>
+    <div id="lista-indicaciones-enf" style="margin-bottom:16px;">
+        <p style="color:#999; text-align:center;">Cargando prácticas...</p>
+    </div>
+    <div style="margin-top:20px; text-align:center;">
+        <button onclick="finalizarEnfermeria('${dni}')"
+            style="background:#014189; color:white; border:none; padding:12px 32px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px;">
+            ✓ Finalizar y atender próximo paciente
+        </button>
+    </div>`;
+
+  seccion.innerHTML = `
+    <h3 style="color:#1d4ed8; font-weight:700; margin-bottom:16px; font-size:16px;">
+        📋 Indicaciones para prestadores externos — DNI ${dni}
+    </h3>
     <div id="lista-indicaciones-enf" style="margin-bottom:16px;">
         <p style="color:#999; text-align:center;">Cargando prácticas...</p>
     </div>
@@ -307,13 +331,22 @@ async function agregarPracticaDesdeEnfermeria(dni) {
   document.getElementById("nueva-practica-enf").value = "";
   cargarIndicacionesEnfermeria(dni);
 }
-function finalizarEnfermeria() {
-  document.getElementById("seccion-indicaciones")?.remove();
-  document
-    .querySelectorAll("#dniMsg, #modal-alertas-enf")
-    .forEach((el) => el.remove());
-  document.getElementById("dni").value = "";
-  document.getElementById("nombre").value = "";
-  document.getElementById("apellido").value = "";
-  window.scrollTo({ top: 0, behavior: "smooth" });
+async function finalizarEnfermeria(dni) {
+    const kitHpv = document.getElementById('check-kit-hpv')?.checked || false;
+    const somf = document.getElementById('check-somf')?.checked || false;
+
+    try {
+        await fetch('/api/enfermeria/actualizar-extras', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ dni, kit_hpv: kitHpv, somf })
+        });
+    } catch(e) { console.warn('No se pudo guardar extras:', e.message); }
+
+    document.getElementById('seccion-indicaciones')?.remove();
+    document.querySelectorAll('[id^="msgExito"]').forEach(el => el.remove());
+    document.getElementById('dni').value = '';
+    document.getElementById('nombre').value = '';
+    document.getElementById('apellido').value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
