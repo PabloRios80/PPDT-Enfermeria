@@ -266,6 +266,13 @@ async function mostrarSeccionIndicaciones(dni) {
     </div>`;
 
   await cargarIndicacionesEnfermeria(dni);
+  // Los listeners van DESPUÉS de cargar las indicaciones
+  document
+    .getElementById("btn-catalogo")
+    ?.addEventListener("click", () => abrirCatalogoPracticas(dni));
+  document
+    .getElementById("btn-finalizar")
+    ?.addEventListener("click", () => finalizarEnfermeria(dni));
   seccion.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
@@ -343,14 +350,6 @@ async function finalizarEnfermeria(dni) {
   document.getElementById("dni").value = "";
   document.getElementById("nombre").value = "";
   document.getElementById("apellido").value = "";
-  requestAnimationFrame(() => {
-    document
-      .getElementById("btn-catalogo")
-      ?.addEventListener("click", () => abrirCatalogoPracticas(dni));
-    document
-      .getElementById("btn-finalizar")
-      ?.addEventListener("click", () => finalizarEnfermeria(dni));
-  });
 }
 
 function abrirCatalogoPracticas(dni) {
