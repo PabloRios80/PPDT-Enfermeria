@@ -250,8 +250,14 @@ async function mostrarSeccionIndicaciones(dni) {
         <p style="color:#999; text-align:center;">Cargando prácticas...</p>
     </div>
     
-    <div style="margin-top:20px; text-align:center;">
-        <button onclick="finalizarEnfermeria()"
+    <div style="margin-top:16px; border-top:1px solid #e5e7eb; padding-top:16px;">
+        <button onclick="abrirCatalogoPracticas('${dni}')"
+            style="width:100%; background:#f0f9ff; border:2px dashed #3b82f6; color:#1d4ed8; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px; margin-bottom:12px;">
+            + Indicar práctica adicional
+        </button>
+    </div>
+    <div style="margin-top:8px; text-align:center;">
+        <button onclick="finalizarEnfermeria('${dni}')"
             style="background:#014189; color:white; border:none; padding:12px 32px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px;">
             ✓ Finalizar y atender próximo paciente
         </button>
@@ -336,79 +342,4 @@ async function finalizarEnfermeria(dni) {
   document.getElementById("nombre").value = "";
   document.getElementById("apellido").value = "";
   window.scrollTo({ top: 0, behavior: "smooth" });
-}
-const CATALOGO_PRACTICAS_EXTERNAS = [
-    { label: 'Mamografía', descripcion: 'mamografia' },
-    { label: 'Ecografía Mamaria', descripcion: 'ecografia mamaria' },
-    { label: 'Ecografía Abdominal', descripcion: 'ecografia abdominal' },
-    { label: 'Videocolonoscopia - VCC', descripcion: 'videocolonoscopia - VCC' },
-    { label: 'Densitometría Ósea', descripcion: 'densitometria osea' },
-    { label: 'Papanicolau', descripcion: 'papanicolau' },
-    { label: 'Oftalmología', descripcion: 'oftalmologia' },
-    { label: 'Espirometría', descripcion: 'espirometria' },
-    { label: 'Test HPV', descripcion: 'test HPV' },
-    { label: 'Sangre Oculta en Materia Fecal - SOMF', descripcion: 'sangre oculta en materia fecal - SOMF' },
-];
-
-function abrirCatalogoPracticas(dni) {
-    // Remover modal anterior si existe
-    document.getElementById('modal-catalogo')?.remove();
-
-    const modal = document.createElement('div');
-    modal.id = 'modal-catalogo';
-    modal.style.cssText = 'position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; display:flex; align-items:center; justify-content:center; padding:20px;';
-    modal.innerHTML = `
-        <div style="background:white; border-radius:12px; padding:24px; max-width:480px; width:100%;">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
-                <h3 style="color:#1d4ed8; font-weight:700; margin:0;">Indicar práctica adicional</h3>
-                <button onclick="document.getElementById('modal-catalogo').remove()"
-                    style="background:none; border:none; font-size:20px; cursor:pointer; color:#666;">✕</button>
-            </div>
-            <p style="font-size:13px; color:#666; margin-bottom:16px;">Seleccioná las prácticas que querés indicar al paciente:</p>
-            <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:20px;">
-                ${CATALOGO_PRACTICAS_EXTERNAS.map(p => `
-                    <label style="display:flex; align-items:center; gap:10px; padding:10px 14px; border:1px solid #e5e7eb; border-radius:8px; cursor:pointer; hover:background:#f9fafb;">
-                        <input type="checkbox" value="${p.descripcion}" style="width:16px; height:16px;">
-                        <span style="font-size:13px; color:#374151;">${p.label}</span>
-                    </label>`).join('')}
-            </div>
-            <button onclick="guardarPracticasAdicionales('${dni}')"
-                style="width:100%; background:#1d4ed8; color:white; border:none; padding:12px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px;">
-                ✓ Autorizar e indicar seleccionadas
-            </button>
-        </div>`;
-    document.body.appendChild(modal);
-}
-
-async function guardarPracticasAdicionales(dni) {
-    const checkboxes = document.querySelectorAll('#modal-catalogo input[type="checkbox"]:checked');
-    if (checkboxes.length === 0) return alert('Seleccioná al menos una práctica.');
-
-    const practicasAGuardar = [];
-    checkboxes.forEach(cb => {
-        if (cb.value === 'test HPV') {
-            practicasAGuardar.push('test HPV genotipo 16');
-            practicasAGuardar.push('test HPV genotipo 18');
-            practicasAGuardar.push('test HPV otros genotipos alto riesgo');
-        } else {
-            practicasAGuardar.push(cb.value);
-        }
-    });
-
-    try {
-        const res = await fetch('/api/agregar-practicas-adicionales', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ dni, practicas: practicasAGuardar })
-        });
-        const data = await res.json();
-        if (data.success) {
-            document.getElementById('modal-catalogo').remove();
-            cargarIndicacionesEnfermeria(dni);
-        } else {
-            alert('Error al guardar: ' + data.message);
-        }
-    } catch(e) {
-        alert('Error de conexión.');
-    }
 }
