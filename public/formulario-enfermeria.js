@@ -8,7 +8,10 @@ const CATALOGO_PRACTICAS_EXTERNAS = [
   { label: "Oftalmología", descripcion: "oftalmologia" },
   { label: "Espirometría", descripcion: "espirometria" },
   { label: "Test HPV", descripcion: "test HPV" },
-  { label: "Sangre Oculta en Materia Fecal - SOMF", descripcion: "sangre oculta en materia fecal - SOMF" },
+  {
+    label: "Sangre Oculta en Materia Fecal - SOMF",
+    descripcion: "sangre oculta en materia fecal - SOMF",
+  },
 ];
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -315,21 +318,16 @@ async function mostrarSeccionIndicaciones(dni) {
   }
 
   seccion.innerHTML = `
-    <h3 style="color:#1d4ed8; font-weight:700; margin-bottom:16px; font-size:16px;">
-        📋 Indicaciones para prestadores externos — DNI ${dni}
-    </h3>
-    <div id="lista-indicaciones-enf" style="margin-bottom:16px;">
-        <p style="color:#999; text-align:center;">Cargando prácticas...</p>
-    </div>
-    
+    <h3 ...>📋 Indicaciones para prestadores externos — DNI ${dni}</h3>
+    <div id="lista-indicaciones-enf" ...>...</div>
     <div style="margin-top:16px; border-top:1px solid #e5e7eb; padding-top:16px;">
-        <button onclick="abrirCatalogoPracticas('${dni}')"
+        <button id="btn-catalogo"
             style="width:100%; background:#f0f9ff; border:2px dashed #3b82f6; color:#1d4ed8; padding:10px; border-radius:8px; font-weight:700; cursor:pointer; font-size:13px; margin-bottom:12px;">
             + Indicar práctica adicional
         </button>
     </div>
     <div style="margin-top:8px; text-align:center;">
-        <button onclick="finalizarEnfermeria('${dni}')"
+        <button id="btn-finalizar"
             style="background:#014189; color:white; border:none; padding:12px 32px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px;">
             ✓ Finalizar y atender próximo paciente
         </button>
@@ -413,5 +411,11 @@ async function finalizarEnfermeria(dni) {
   document.getElementById("dni").value = "";
   document.getElementById("nombre").value = "";
   document.getElementById("apellido").value = "";
+  document
+    .getElementById("btn-catalogo")
+    .addEventListener("click", () => abrirCatalogoPracticas(dni));
+  document
+    .getElementById("btn-finalizar")
+    .addEventListener("click", () => finalizarEnfermeria(dni));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
