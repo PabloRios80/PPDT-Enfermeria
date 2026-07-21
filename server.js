@@ -118,6 +118,28 @@ app.post("/api/enfermeria/guardar", async (req, res) => {
 
     console.log("✅ Enfermería guardada en Supabase para DNI:", newRow["DNI"]);
 
+    const hoy = new Date().toISOString().split("T")[0];
+
+    const { data: yaExiste } = await supabase
+      .from("practicas_autorizadas")
+      .select("id")
+      .eq("dni", newRow["DNI"])
+      .eq("descripcion_practica", "Consulta de enfermería")
+      .eq("fecha_autorizacion", hoy)
+      .maybeSingle();
+
+    if (!yaExiste) {
+      await supabase.from("practicas_autorizadas").insert({
+        dni: newRow["DNI"],
+        nombre_completo: `${newRow["Apellido"]} ${newRow["Nombre"]}`.trim(),
+        descripcion_practica: "Consulta de enfermería",
+        estado: "REALIZADA",
+        fecha_autorizacion: hoy,
+        fecha_carga: hoy,
+        nombre_prestador: newRow["Nombre Enfermera"],
+      });
+    }
+
     if (APPS_SCRIPT_URL) {
       axios
         .post(APPS_SCRIPT_URL, {
