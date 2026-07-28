@@ -75,6 +75,7 @@ document.addEventListener("DOMContentLoaded", () => {
       Nombre: nombre,
       Apellido: apellido,
       "Nombre Enfermera": document.getElementById("nombre_enfermera").value,
+      id_sede_dp: window.dpIdSedeDp || null,
       ...formValues,
     };
 

@@ -106,6 +106,7 @@ app.post("/api/enfermeria/guardar", async (req, res) => {
       espirometria_pdf: newRow["Espirometria (Enlace a PDF)"],
       fecha_cierre_enf: newRow["Fecha_cierre_Enf"],
       nombre_enfermera: newRow["Nombre Enfermera"],
+      id_sede_dp: newRow["id_sede_dp"] ? parseInt(newRow["id_sede_dp"]) : null,
     });
 
     if (error) {
