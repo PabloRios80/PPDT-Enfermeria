@@ -165,6 +165,18 @@ app.get("/alertas-clinicas/:dni", async (req, res) => {
       .eq("dni", dni)
       .single();
 
+    let menor = null;
+    if (!afiliado) {
+      const { data: afiliadoMenor } = await supabase
+        .from("afiliados_menores")
+        .select("*")
+        .eq("dni", dni)
+        .order("fecha_carga", { ascending: false })
+        .limit(1)
+        .single();
+      menor = afiliadoMenor || null;
+    }
+
     const { data: ultimoDP } = await supabase
       .from("historial_dia_preventivo")
       .select("*")
@@ -175,90 +187,200 @@ app.get("/alertas-clinicas/:dni", async (req, res) => {
 
     const alertas = [];
 
-    // Patologías declaradas
-    if (afiliado?.hipertension === "si")
-      alertas.push({
-        tipo: "URGENTE",
-        campo: "Presion_Arterial",
-        mensaje: "🚨 Declara hipertensión en hoja de vida",
-      });
-    if (afiliado?.diabetes === "si")
-      alertas.push({
-        tipo: "URGENTE",
-        campo: "Diabetes",
-        mensaje: "🚨 Declara diabetes en hoja de vida",
-      });
-    if (afiliado?.colesterol === "si")
-      alertas.push({
-        tipo: "RIESGO",
-        campo: "IMC",
-        mensaje: "⚠️ Declara colesterol alto en hoja de vida",
-      });
-    if (afiliado?.depresion === "si")
-      alertas.push({
-        tipo: "RIESGO",
-        campo: "Salud_Mental",
-        mensaje: "⚠️ Declara depresión en hoja de vida",
-      });
-
-    // Hábitos de riesgo
-    if (afiliado?.fuma && afiliado.fuma !== "nunca" && afiliado.fuma !== "")
-      alertas.push({
-        tipo: "RIESGO",
-        campo: "Tabaco",
-        mensaje: `⚠️ Fumador declarado: ${afiliado.fuma}`,
-      });
-    if (afiliado?.fumador_cronico === "si")
-      alertas.push({
-        tipo: "URGENTE",
-        campo: "Tabaco",
-        mensaje: "🚨 Fumador crónico declarado",
-      });
-    if (afiliado?.abuso_alcohol_drogas === "si")
-      alertas.push({
-        tipo: "URGENTE",
-        campo: "Adicciones",
-        mensaje: "🚨 Declara abuso de alcohol y/o drogas",
-      });
-    if (afiliado?.sedentarismo === "si")
-      alertas.push({
-        tipo: "INFO",
-        campo: "IMC",
-        mensaje: "ℹ️ Declara sedentarismo",
-      });
-
-    // BMI desde hoja de vida
-    if (afiliado?.categoria_bmi) {
-      const cat = afiliado.categoria_bmi.toLowerCase();
-      if (cat.includes("obesidad"))
+    if (afiliado) {
+      // ── Patologías declaradas (adulto) ──
+      if (afiliado?.hipertension === "si")
         alertas.push({
           tipo: "URGENTE",
-          campo: "IMC",
-          mensaje: `🚨 BMI ${afiliado.bmi} — ${afiliado.categoria_bmi} (hoja de vida)`,
+          campo: "Presion_Arterial",
+          mensaje: "🚨 Declara hipertensión en hoja de vida",
         });
-      else if (cat.includes("sobrepeso"))
+      if (afiliado?.diabetes === "si")
+        alertas.push({
+          tipo: "URGENTE",
+          campo: "Diabetes",
+          mensaje: "🚨 Declara diabetes en hoja de vida",
+        });
+      if (afiliado?.colesterol === "si")
         alertas.push({
           tipo: "RIESGO",
           campo: "IMC",
-          mensaje: `⚠️ BMI ${afiliado.bmi} — ${afiliado.categoria_bmi} (hoja de vida)`,
+          mensaje: "⚠️ Declara colesterol alto en hoja de vida",
+        });
+      if (afiliado?.depresion === "si")
+        alertas.push({
+          tipo: "RIESGO",
+          campo: "Salud_Mental",
+          mensaje: "⚠️ Declara depresión en hoja de vida",
+        });
+      if (afiliado?.fuma && afiliado.fuma !== "nunca" && afiliado.fuma !== "")
+        alertas.push({
+          tipo: "RIESGO",
+          campo: "Tabaco",
+          mensaje: `⚠️ Fumador declarado: ${afiliado.fuma}`,
+        });
+      if (afiliado?.fumador_cronico === "si")
+        alertas.push({
+          tipo: "URGENTE",
+          campo: "Tabaco",
+          mensaje: "🚨 Fumador crónico declarado",
+        });
+      if (afiliado?.abuso_alcohol_drogas === "si")
+        alertas.push({
+          tipo: "URGENTE",
+          campo: "Adicciones",
+          mensaje: "🚨 Declara abuso de alcohol y/o drogas",
+        });
+      if (afiliado?.sedentarismo === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "IMC",
+          mensaje: "ℹ️ Declara sedentarismo",
+        });
+      if (afiliado?.categoria_bmi) {
+        const cat = afiliado.categoria_bmi.toLowerCase();
+        if (cat.includes("obesidad"))
+          alertas.push({
+            tipo: "URGENTE",
+            campo: "IMC",
+            mensaje: `🚨 BMI ${afiliado.bmi} — ${afiliado.categoria_bmi} (hoja de vida)`,
+          });
+        else if (cat.includes("sobrepeso"))
+          alertas.push({
+            tipo: "RIESGO",
+            campo: "IMC",
+            mensaje: `⚠️ BMI ${afiliado.bmi} — ${afiliado.categoria_bmi} (hoja de vida)`,
+          });
+      }
+      if (afiliado?.hipertension_familiar === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Presion_Arterial",
+          mensaje: "ℹ️ Antecedente familiar de hipertensión",
+        });
+      if (afiliado?.diabetes_familiar === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Diabetes",
+          mensaje: "ℹ️ Antecedente familiar de diabetes",
+        });
+    } else if (menor) {
+      // ── Antecedentes familiares (menor) ──
+      if (menor.fam_hipertension === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Presion_Arterial",
+          mensaje: "ℹ️ Antecedente familiar de hipertensión",
+        });
+      if (menor.fam_diabetes === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Diabetes",
+          mensaje: "ℹ️ Antecedente familiar de diabetes",
+        });
+      if (menor.fam_obesidad === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "IMC",
+          mensaje: "ℹ️ Antecedente familiar de obesidad",
+        });
+      if (menor.fam_cardio === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Presion_Arterial",
+          mensaje:
+            "ℹ️ Antecedente familiar cardiovascular (o ACV antes de los 55)",
+        });
+      if (menor.fam_mental === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Salud_Mental",
+          mensaje: "ℹ️ Antecedente familiar de salud mental",
+        });
+      if (menor.fam_adicciones === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Adicciones",
+          mensaje: "ℹ️ Antecedente familiar de adicciones",
+        });
+      if (menor.fam_cancer === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Otros",
+          mensaje: "ℹ️ Antecedente familiar de cáncer",
+        });
+
+      // ── Hábitos y condiciones propias (perfil B/C) ──
+      if (menor.tabaco === "si")
+        alertas.push({
+          tipo: "URGENTE",
+          campo: "Tabaco",
+          mensaje: "🚨 Consume o ha consumido tabaco",
+        });
+      if (menor.alcohol === "si")
+        alertas.push({
+          tipo: "RIESGO",
+          campo: "Adicciones",
+          mensaje: "⚠️ Consume o ha consumido alcohol",
+        });
+      if (menor.sustancias === "si")
+        alertas.push({
+          tipo: "URGENTE",
+          campo: "Adicciones",
+          mensaje: "🚨 Consume o ha consumido otras sustancias",
+        });
+      if (menor.violencia === "si")
+        alertas.push({
+          tipo: "URGENTE",
+          campo: "Salud_Mental",
+          mensaje: "🚨 Refiere situaciones de violencia o abuso",
+        });
+      if (menor.tristeza === "si")
+        alertas.push({
+          tipo: "RIESGO",
+          campo: "Salud_Mental",
+          mensaje: "⚠️ Episodios de tristeza/aislamiento prolongados",
+        });
+      if (menor.alim_trastorno === "si")
+        alertas.push({
+          tipo: "RIESGO",
+          campo: "IMC",
+          mensaje: "⚠️ Preocupación por peso/alimentación (posible trastorno)",
+        });
+      if (menor.escoliosis === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Otros",
+          mensaje: "ℹ️ Posible escoliosis o problema de columna",
+        });
+      if (menor.vision === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Otros",
+          mensaje: "ℹ️ Dificultad visual referida",
+        });
+      if (menor.audicion === "si")
+        alertas.push({
+          tipo: "INFO",
+          campo: "Otros",
+          mensaje: "ℹ️ Dificultad auditiva referida",
+        });
+      if (menor.vacunas === "no")
+        alertas.push({
+          tipo: "RIESGO",
+          campo: "Vacunas",
+          mensaje: "⚠️ Vacunas del calendario no están al día",
+        });
+
+      // ── Condición de salud diagnosticada (perfil A) ──
+      if (menor.condicion_salud === "si")
+        alertas.push({
+          tipo: "URGENTE",
+          campo: "Otros",
+          mensaje: `🚨 Condición de salud diagnosticada${menor.condicion_detalle ? ": " + menor.condicion_detalle : ""}`,
         });
     }
 
-    // Antecedentes familiares relevantes
-    if (afiliado?.hipertension_familiar === "si")
-      alertas.push({
-        tipo: "INFO",
-        campo: "Presion_Arterial",
-        mensaje: "ℹ️ Antecedente familiar de hipertensión",
-      });
-    if (afiliado?.diabetes_familiar === "si")
-      alertas.push({
-        tipo: "INFO",
-        campo: "Diabetes",
-        mensaje: "ℹ️ Antecedente familiar de diabetes",
-      });
-
-    // DP anterior
     if (ultimoDP?.presion_arterial === "Hipertensión")
       alertas.push({
         tipo: "URGENTE",
@@ -266,12 +388,11 @@ app.get("/alertas-clinicas/:dni", async (req, res) => {
         mensaje: "🚨 Hipertensión registrada en Día Preventivo anterior",
       });
 
-    res.json({ success: true, afiliado: afiliado || null, alertas });
+    res.json({ success: true, afiliado: afiliado || menor || null, alertas });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
   }
 });
-
 app.post("/api/enfermeria/actualizar-tablero", async (req, res) => {
   const { dni } = req.body;
   const hoy = new Date().toISOString().split("T")[0];
