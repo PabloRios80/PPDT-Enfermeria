@@ -31,7 +31,8 @@
             return;
           }
           window.dpProfesional = payload.nombre + " " + payload.apellido;
-          window.dpIdSedeDp = payload.id_sede_dp || null; 
+          window.dpIdSedeDp = payload.id_sede_dp || null;
+          window.dpToken = token;
         } catch (e) {
           window.location.href = "https://acceso.diapreventivoiapos.com";
         }
@@ -96,11 +97,22 @@
             cursor: pointer;
           "
         >
-          <i class="fas fa-sign-out-alt"></i> Cerrar sesión
-        </button>
-      </div>
-      <div style="background-color: #00a8e7; height: 4px"></div>
-    </header>
+    <i class="fas fa-sign-out-alt"></i> Cerrar sesión
+  </button>
+  
+    href="#"
+    id="btnVerTablero"
+    onclick="
+      verTableroDelDia();
+      return false;
+    "
+    class="hidden bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm transition"
+  >
+    <i class="fas fa-table mr-1"></i> Ver Tablero del Día
+  </a>
+</div>
+<div style="background-color: #00a8e7; height: 4px"></div>
+</header>
 
     <main class="flex-grow flex items-center justify-center py-8">
       <div
@@ -335,6 +347,23 @@
         localStorage.removeItem("dpProfesional");
         window.location.href = "https://acceso.diapreventivoiapos.com";
       }
+      function verTableroDelDia() {
+        window.open(
+          `https://tablero-dia.onrender.com/?token=${encodeURIComponent(window.dpToken)}`,
+          "_blank",
+        );
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        const SEDES_CON_TABLERO = [1, 4, 6];
+        const boton = document.getElementById("btnVerTablero");
+        if (boton) {
+          boton.classList.toggle(
+            "hidden",
+            !SEDES_CON_TABLERO.includes(window.dpIdSedeDp),
+          );
+        }
+      });
     </script>
   </body>
 </html>
