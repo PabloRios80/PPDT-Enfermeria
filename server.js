@@ -533,6 +533,60 @@ app.post("/api/agregar-practicas-adicionales", async (req, res) => {
     res.status(500).json({ success: false, message: e.message });
   }
 });
+
+// ── KITS HPV / SOMF (entrega, recepción, resultado) ──
+app.get("/api/kits-estado/:dni", async (req, res) => {
+  try {
+    const { data, error } = await supabase
+      .from("kits_seguimiento")
+      .select("*")
+      .eq("dni", req.params.dni);
+    if (error) throw error;
+    res.json({ success: true, kits: data || [] });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
+app.post("/api/kits/entregar", async (req, res) => {
+  const { dni, tipo_kit, entregado_por, rol_entrego } = req.body;
+  if (!dni || !tipo_kit) {
+    return res.status(400).json({ success: false, message: "Faltan datos." });
+  }
+  try {
+    const { data: existente } = await supabase
+      .from("kits_seguimiento")
+      .select("id")
+      .eq("dni", dni)
+      .eq("tipo_kit", tipo_kit)
+      .maybeSingle();
+
+    if (existente) {
+      await supabase
+        .from("kits_seguimiento")
+        .update({
+          entregado: true,
+          entregado_por,
+          rol_entrego,
+          fecha_entrega: new Date().toISOString(),
+        })
+        .eq("id", existente.id);
+    } else {
+      await supabase.from("kits_seguimiento").insert({
+        dni,
+        tipo_kit,
+        entregado: true,
+        entregado_por,
+        rol_entrego,
+        fecha_entrega: new Date().toISOString(),
+      });
+    }
+    res.json({ success: true });
+  } catch (e) {
+    res.status(500).json({ success: false, message: e.message });
+  }
+});
+
 app.listen(PORT, () =>
   console.log(`Portal Enfermería corriendo en http://localhost:${PORT}`),
 );

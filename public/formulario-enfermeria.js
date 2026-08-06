@@ -259,6 +259,15 @@ async function mostrarSeccionIndicaciones(dni) {
             + Indicar práctica adicional
         </button>
     </div>
+    <div style="margin-top:16px; border-top:1px solid #e5e7eb; padding-top:16px;">
+        <p style="font-size:12px; font-weight:700; color:#374151; margin-bottom:8px;">Entrega de kits de muestra</p>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; margin-bottom:8px; cursor:pointer;">
+            <input type="checkbox" id="chk-kit-hpv" style="width:16px; height:16px;"> Entregué kit HPV
+        </label>
+        <label style="display:flex; align-items:center; gap:8px; font-size:13px; cursor:pointer;">
+            <input type="checkbox" id="chk-kit-somf" style="width:16px; height:16px;"> Entregué kit SOMF
+        </label>
+    </div>
     <div style="margin-top:8px; text-align:center;">
         <button id="btn-finalizar"
             style="background:#014189; color:white; border:none; padding:12px 32px; border-radius:8px; font-weight:700; cursor:pointer; font-size:14px;">
@@ -267,6 +276,7 @@ async function mostrarSeccionIndicaciones(dni) {
     </div>`;
 
   await cargarIndicacionesEnfermeria(dni);
+  await cargarEstadoKits(dni);
   // Los listeners van DESPUÉS de cargar las indicaciones
   document
     .getElementById("btn-catalogo")
@@ -274,7 +284,52 @@ async function mostrarSeccionIndicaciones(dni) {
   document
     .getElementById("btn-finalizar")
     ?.addEventListener("click", () => finalizarEnfermeria(dni));
+  document
+    .getElementById("chk-kit-hpv")
+    ?.addEventListener("change", (e) => {
+      if (e.target.checked) entregarKit(dni, "HPV", e.target);
+    });
+  document
+    .getElementById("chk-kit-somf")
+    ?.addEventListener("change", (e) => {
+      if (e.target.checked) entregarKit(dni, "SOMF", e.target);
+    });
   seccion.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function cargarEstadoKits(dni) {
+  try {
+    const res = await fetch(`/api/kits-estado/${dni}`);
+    const data = await res.json();
+    (data.kits || []).forEach((k) => {
+      const chk = document.getElementById(
+        `chk-kit-${k.tipo_kit.toLowerCase()}`,
+      );
+      if (chk && k.entregado) {
+        chk.checked = true;
+        chk.disabled = true;
+      }
+    });
+  } catch (e) {}
+}
+
+async function entregarKit(dni, tipoKit, checkboxEl) {
+  checkboxEl.disabled = true;
+  try {
+    await fetch("/api/kits/entregar", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dni,
+        tipo_kit: tipoKit,
+        entregado_por: window.dpProfesional || "Desconocido",
+        rol_entrego: "enfermeria",
+      }),
+    });
+  } catch (e) {
+    checkboxEl.disabled = false;
+    alert("Error al registrar la entrega del kit. Intentá de nuevo.");
+  }
 }
 
 async function cargarIndicacionesEnfermeria(dni) {
