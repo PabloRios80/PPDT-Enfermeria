@@ -403,11 +403,25 @@ async function agregarPracticaDesdeEnfermeria(dni) {
     .getElementById("nueva-practica-enf")
     .value.trim();
   if (!descripcion) return alert("Ingresá la descripción de la práctica.");
-  await fetch("/api/agregar-practica-enfermeria", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ dni, descripcion_practica: descripcion }),
-  });
+  try {
+    const res = await fetch("/api/agregar-practica-enfermeria", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ dni, descripcion_practica: descripcion }),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      console.error("Error al agregar práctica:", res.status, errData);
+      alert(
+        `⚠️ No se pudo agregar la práctica (error ${res.status}). Probá de nuevo.`,
+      );
+      return;
+    }
+  } catch (e) {
+    console.error("Error de conexión al agregar práctica:", e.message);
+    alert("⚠️ Error de conexión al agregar la práctica. Probá de nuevo.");
+    return;
+  }
   document.getElementById("nueva-practica-enf").value = "";
   cargarIndicacionesEnfermeria(dni);
 }
