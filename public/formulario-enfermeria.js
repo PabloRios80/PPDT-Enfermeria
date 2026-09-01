@@ -376,11 +376,25 @@ async function cargarIndicacionesEnfermeria(dni) {
 }
 
 async function marcarIndicacionEnfermeria(id, valor, dni) {
-  await fetch(`/api/indicacion-practica/${id}`, {
-    method: "PATCH",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ indicacion_entregada: valor }),
-  });
+  try {
+    const res = await fetch(`/api/indicacion-practica/${id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ indicacion_entregada: valor }),
+    });
+    if (!res.ok) {
+      const errData = await res.json().catch(() => ({}));
+      console.error("Error al marcar indicación:", res.status, errData);
+      alert(
+        `⚠️ No se pudo guardar el cambio (error ${res.status}). Probá de nuevo, y si sigue fallando avisá a soporte.`,
+      );
+      return;
+    }
+  } catch (e) {
+    console.error("Error de conexión al marcar indicación:", e.message);
+    alert("⚠️ Error de conexión al guardar. Probá de nuevo.");
+    return;
+  }
   cargarIndicacionesEnfermeria(dni);
 }
 
