@@ -398,7 +398,13 @@ app.get("/alertas-clinicas/:dni", async (req, res) => {
 });
 app.post("/api/enfermeria/actualizar-tablero", async (req, res) => {
   const { dni } = req.body;
-  const hoy = new Date().toISOString().split("T")[0];
+  // Usar la fecha real de Argentina, no UTC — de noche (después de las
+  // 21hs ART) UTC ya está en el día siguiente, y el "hoy" calculado con
+  // new Date().toISOString() no coincidía con la fecha real guardada en
+  // tablero_dia, por lo que el UPDATE nunca encontraba la fila a marcar.
+  const hoy = new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Argentina/Buenos_Aires",
+  }).format(new Date());
   try {
     const { data: registro } = await supabase
       .from("tablero_dia")
@@ -413,10 +419,12 @@ app.post("/api/enfermeria/actualizar-tablero", async (req, res) => {
         .from("tablero_dia")
         .update({ enf_paso: true, enf_cargado_app: true })
         .eq("id", registro.id);
+      res.json({ success: true, actualizado: true });
+    } else {
+      res.json({ success: true, actualizado: false });
     }
-    res.json({ success: true });
   } catch (e) {
-    res.json({ success: false });
+    res.json({ success: false, actualizado: false });
   }
 });
 

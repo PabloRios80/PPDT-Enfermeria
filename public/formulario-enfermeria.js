@@ -90,14 +90,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
       if (response.ok) {
         // Actualizar tablero_dia
+        let tableroActualizado = true;
         try {
-          await fetch("/api/enfermeria/actualizar-tablero", {
+          const resTablero = await fetch("/api/enfermeria/actualizar-tablero", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ dni }),
           });
+          const dataTablero = await resTablero.json();
+          tableroActualizado = dataTablero.actualizado !== false;
         } catch (e) {
           console.warn("No se pudo actualizar tablero:", e.message);
+          tableroActualizado = false;
+        }
+
+        if (!tableroActualizado) {
+          alert(
+            "⚠️ Los datos de enfermería se guardaron, pero este paciente NO figura admitido en el Tablero del Día de hoy — el tablero no se pudo marcar. Avisá al PV para que lo revise.",
+          );
         }
 
         // Mostrar mensaje de éxito
