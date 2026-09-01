@@ -32,6 +32,7 @@
           }
           window.dpProfesional = payload.nombre + " " + payload.apellido;
           window.dpIdSedeDp = payload.id_sede_dp || null;
+          window.dpVePracticas = payload.ve_practicas === true;
           window.dpToken = token;
         } catch (e) {
           window.location.href = "https://acceso.diapreventivoiapos.com";
@@ -107,6 +108,15 @@
           style="margin-left: 10px; text-decoration: none;"
         >
           <i class="fas fa-table mr-1"></i> Ver Tablero del Día
+        </a>
+        <a
+          href="#"
+          id="btnCargarPracticas"
+          onclick="irACargarPracticas(); return false;"
+          class="hidden bg-purple-600 hover:bg-purple-700 text-white px-3 py-2 rounded-lg text-sm transition"
+          style="margin-left: 10px; text-decoration: none;"
+        >
+          <i class="fas fa-flask mr-1"></i> Cargar Prácticas
         </a>
       </div>
     </header>
@@ -350,6 +360,12 @@
           "_blank",
         );
       }
+      function irACargarPracticas() {
+        window.open(
+          `https://prestadores.diapreventivoiapos.com/?token=${encodeURIComponent(window.dpToken)}`,
+          "_blank",
+        );
+      }
 
       document.addEventListener("DOMContentLoaded", () => {
         const SEDES_CON_TABLERO = [1, 2, 4, 6];
@@ -359,6 +375,11 @@
             "hidden",
             !SEDES_CON_TABLERO.includes(window.dpIdSedeDp),
           );
+        }
+
+        const btnPracticas = document.getElementById("btnCargarPracticas");
+        if (btnPracticas) {
+          btnPracticas.classList.toggle("hidden", !window.dpVePracticas);
         }
       });
     </script>
