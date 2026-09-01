@@ -76,6 +76,10 @@ app.get("/verificar-afiliado/:dni", async (req, res) => {
 app.post("/api/enfermeria/guardar", async (req, res) => {
   try {
     const newRow = req.body;
+    // Normalizar el DNI (sin espacios) — un DNI con espacios de más rompe
+    // el match contra tablero_dia y genera falsos "ya existe" contra sí
+    // mismo, aunque parezca el mismo número a simple vista.
+    if (newRow["DNI"]) newRow["DNI"] = newRow["DNI"].toString().trim();
     newRow["Fecha_cierre_Enf"] = new Date().toLocaleDateString("es-AR");
 
     // Verificar si ya existe registro del mismo año

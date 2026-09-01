@@ -63,7 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
-    const dni = document.getElementById("dni").value;
+    const dni = document.getElementById("dni").value.trim();
     const nombre = document.getElementById("nombre").value;
     const apellido = document.getElementById("apellido").value;
 
