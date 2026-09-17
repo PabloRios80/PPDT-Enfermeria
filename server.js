@@ -141,10 +141,12 @@ app.post("/api/enfermeria/guardar", async (req, res) => {
         dni: newRow["DNI"],
         nombre_completo: `${newRow["Apellido"]} ${newRow["Nombre"]}`.trim(),
         descripcion_practica: "Consulta de enfermería",
+        codigo_prestacion: "B040104",
         estado: "REALIZADA",
         fecha_autorizacion: hoy,
         fecha_carga: hoy,
         nombre_prestador: newRow["Nombre Enfermera"],
+        id_sede_dp: newRow["id_sede_dp"] ? parseInt(newRow["id_sede_dp"]) : null,
       });
     }
 
