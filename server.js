@@ -482,22 +482,92 @@ app.patch("/api/indicacion-practica/:id", async (req, res) => {
   }
 });
 
+// ── Helpers para prácticas agregadas manualmente por enfermería ──
+// Fecha real de Argentina (no UTC)
+function hoyArgentina() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "America/Argentina/Buenos_Aires",
+  }).format(new Date());
+}
+
+// Sede y nombre SIEMPRE desde el ingreso real del paciente en tablero_dia.
+// Sin id_sede_dp la práctica no aparece en el portal del prestador
+// (que filtra por las sedes que atiende).
+async function datosIngresoHoy(dni) {
+  const { data } = await supabase
+    .from("tablero_dia")
+    .select("id_sede_dp, apellido_y_nombre, fecha")
+    .eq("dni", dni)
+    .lte("fecha", hoyArgentina())
+    .order("fecha", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return data || {};
+}
+
+// Inserta (o reutiliza) una práctica agregada por enfermería.
+// Solo considera "existente" una práctica del AÑO EN CURSO: si el paciente
+// tuvo la misma práctica en años anteriores, se crea una nueva.
+async function agregarPracticaManual(dni, descripcion) {
+  const dniLimpio = String(dni).trim();
+  const anio = hoyArgentina().slice(0, 4);
+  const ingreso = await datosIngresoHoy(dniLimpio);
+
+  const { data: existentes, error: errBusq } = await supabase
+    .from("practicas_autorizadas")
+    .select("id, estado, id_sede_dp, nombre_completo")
+    .eq("dni", dniLimpio)
+    .ilike("descripcion_practica", descripcion)
+    .gte("fecha_autorizacion", `${anio}-01-01`);
+  if (errBusq) throw errBusq;
+
+  const existente = (existentes || [])[0];
+  if (existente) {
+    const upd = { indicacion_entregada: true };
+    // Completar sede/nombre si la fila quedó sin ellos
+    if (!existente.id_sede_dp && ingreso.id_sede_dp)
+      upd.id_sede_dp = ingreso.id_sede_dp;
+    if (!existente.nombre_completo && ingreso.apellido_y_nombre)
+      upd.nombre_completo = ingreso.apellido_y_nombre;
+    const { error } = await supabase
+      .from("practicas_autorizadas")
+      .update(upd)
+      .eq("id", existente.id);
+    if (error) throw error;
+    return { id: existente.id, creada: false, estado: existente.estado };
+  }
+
+  const { data: nueva, error } = await supabase
+    .from("practicas_autorizadas")
+    .insert({
+      dni: dniLimpio,
+      descripcion_practica: descripcion,
+      estado: "AUTORIZADA",
+      origen: "manual",
+      observaciones: "Agregada por enfermería",
+      indicacion_entregada: true,
+      fecha_autorizacion: hoyArgentina(),
+      nombre_completo: ingreso.apellido_y_nombre || "",
+      id_sede_dp: ingreso.id_sede_dp || null,
+    })
+    .select("id")
+    .single();
+  if (error) throw error;
+  return { id: nueva.id, creada: true };
+}
+
 // Agregar práctica
 app.post("/api/agregar-practica-enfermeria", async (req, res) => {
   try {
     const { dni, descripcion_practica } = req.body;
-    const { error } = await supabase.from("practicas_autorizadas").insert({
-      dni,
-      descripcion_practica,
-      estado: "AUTORIZADA",
-      indicacion_entregada: true,
-      fecha_autorizacion: new Date().toISOString().split("T")[0],
-      nombre_completo: "",
-    });
-    if (error) throw error;
-    res.json({ success: true });
+    if (!dni || !descripcion_practica)
+      return res.status(400).json({ success: false, message: "Faltan datos." });
+    const r = await agregarPracticaManual(dni, descripcion_practica);
+    console.log("➕ Práctica enfermería:", dni, descripcion_practica, r);
+    res.json({ success: true, ...r });
   } catch (e) {
-    res.status(500).json({ success: false });
+    console.error("Error agregar-practica-enfermeria:", e);
+    res.status(500).json({ success: false, message: e.message });
   }
 });
 
@@ -517,36 +587,18 @@ app.post("/api/enfermeria/actualizar-extras", async (req, res) => {
 });
 app.post("/api/agregar-practicas-adicionales", async (req, res) => {
   const { dni, practicas } = req.body;
+  if (!dni || !Array.isArray(practicas))
+    return res.status(400).json({ success: false, message: "Faltan datos." });
   try {
+    const resultados = [];
     for (const descripcion of practicas) {
-      // Verificar si ya existe
-      const { data: existente } = await supabase
-        .from("practicas_autorizadas")
-        .select("id")
-        .eq("dni", dni)
-        .ilike("descripcion_practica", descripcion)
-        .single();
-
-      if (existente) {
-        // Solo actualizar indicacion_entregada
-        await supabase
-          .from("practicas_autorizadas")
-          .update({ indicacion_entregada: true })
-          .eq("id", existente.id);
-      } else {
-        // Insertar nueva
-        await supabase.from("practicas_autorizadas").insert({
-          dni,
-          descripcion_practica: descripcion,
-          estado: "AUTORIZADA",
-          indicacion_entregada: true,
-          fecha_autorizacion: new Date().toISOString().split("T")[0],
-          nombre_completo: "",
-        });
-      }
+      const r = await agregarPracticaManual(dni, descripcion);
+      resultados.push({ descripcion, ...r });
     }
-    res.json({ success: true });
+    console.log("➕ Prácticas adicionales:", dni, resultados);
+    res.json({ success: true, resultados });
   } catch (e) {
+    console.error("Error agregar-practicas-adicionales:", e);
     res.status(500).json({ success: false, message: e.message });
   }
 });
