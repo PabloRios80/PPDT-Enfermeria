@@ -22,8 +22,11 @@ console.log("Sirviendo estáticos desde:", path.join(__dirname, "public"));
 const APPS_SCRIPT_URL = process.env.APPS_SCRIPT_URL;
 
 // ── VERIFICAR AFILIADO IAPOS ──
-app.get("/verificar-afiliado/:dni", async (req, res) => {
-  const dni = req.params.dni;
+// 1) Consulta el webservice SOAP del padrón IAPOS (2 intentos).
+// 2) Si el padrón no responde, respaldo con Supabase: si el paciente
+//    ingresó al tablero_dia (o tiene turno) en los últimos días, ya fue
+//    validado en la admisión y se deja continuar a enfermería.
+async function consultarPadronIapos(dni) {
   const hoy = new Date().toISOString().split("T")[0];
   const soapBody = `<?xml version="1.0" encoding="utf-8"?>
     <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
@@ -39,37 +42,116 @@ app.get("/verificar-afiliado/:dni", async (req, res) => {
             </BEWsValidaAfi.Execute>
         </soap:Body>
     </soap:Envelope>`;
-  try {
-    const response = await axios.post(
-      "https://aswe.santafe.gov.ar/iapos-sw-srvt/servlet/abewsvalidaafi",
-      soapBody,
-      {
-        headers: {
-          "Content-Type": "text/xml; charset=utf-8",
-          SOAPAction: "IAPOS_WSaction/ABEWSVALIDAAFI.Execute",
-        },
-        timeout: 10000,
-        httpsAgent: agenteIapos,
+  const response = await axios.post(
+    "https://aswe.santafe.gov.ar/iapos-sw-srvt/servlet/abewsvalidaafi",
+    soapBody,
+    {
+      headers: {
+        "Content-Type": "text/xml; charset=utf-8",
+        SOAPAction: "IAPOS_WSaction/ABEWSVALIDAAFI.Execute",
       },
-    );
-    const xml = response.data;
-    const get = (tag) => {
-      const m = xml.match(new RegExp(`<${tag}[^>]*>([^<]*)<\/${tag}>`));
-      return m ? m[1].trim() : null;
+      timeout: 12000,
+      httpsAgent: agenteIapos,
+    },
+  );
+  const xml = response.data;
+  const get = (tag) => {
+    const m = String(xml).match(new RegExp(`<${tag}[^>]*>([^<]*)<\/${tag}>`));
+    return m ? m[1].trim() : null;
+  };
+  const estado = get("Estado");
+  return {
+    esActivo: estado === "A",
+    estado,
+    nombre: get("Apenom"),
+    edad: get("Edad"),
+    sexo: get("Sexo"),
+    localidad: get("Localidad"),
+    mensaje: get("Msgdsc"),
+    fuente: "padron_iapos",
+  };
+}
+
+async function respaldoAfiliadoSupabase(dni) {
+  const desde = new Date(Date.now() - 7 * 86400000).toISOString().split("T")[0];
+  const { data: t } = await supabase
+    .from("tablero_dia")
+    .select("apellido_y_nombre, edad, sexo, es_afiliado, fecha")
+    .eq("dni", dni)
+    .gte("fecha", desde)
+    .order("fecha", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (t) {
+    return {
+      esActivo: true,
+      estado: "A",
+      nombre: t.apellido_y_nombre,
+      edad: t.edad != null ? String(t.edad) : null,
+      sexo: t.sexo,
+      localidad: null,
+      mensaje: "Padrón IAPOS sin respuesta — validado por ingreso al tablero del día",
+      fuente: "respaldo_tablero",
     };
-    const estado = get("Estado");
-    res.json({
-      esActivo: estado === "A",
-      estado,
-      nombre: get("Apenom"),
-      edad: get("Edad"),
-      sexo: get("Sexo"),
-      localidad: get("Localidad"),
-      mensaje: get("Msgdsc"),
-    });
-  } catch (e) {
-    res.status(500).json({ esActivo: false, error: e.message });
   }
+  const { data: tu } = await supabase
+    .from("turnos")
+    .select("dni")
+    .eq("dni", dni)
+    .gte("fecha_inicio", desde)
+    .limit(1)
+    .maybeSingle();
+  if (tu) {
+    const { data: af } = await supabase
+      .from("afiliados")
+      .select("nombre, apellido, edad, sexo_biologico")
+      .eq("dni", dni)
+      .limit(1)
+      .maybeSingle();
+    return {
+      esActivo: true,
+      estado: "A",
+      nombre: af ? `${af.apellido || ""} ${af.nombre || ""}`.trim() : null,
+      edad: af && af.edad != null ? String(af.edad) : null,
+      sexo: af ? af.sexo_biologico : null,
+      localidad: null,
+      mensaje: "Padrón IAPOS sin respuesta — validado por turno asignado",
+      fuente: "respaldo_turno",
+    };
+  }
+  return null;
+}
+
+app.get("/verificar-afiliado/:dni", async (req, res) => {
+  const dni = String(req.params.dni).trim();
+  let ultimoError;
+  for (let intento = 1; intento <= 2; intento++) {
+    try {
+      return res.json(await consultarPadronIapos(dni));
+    } catch (e) {
+      ultimoError = e;
+      console.error(
+        `⚠️ Padrón IAPOS intento ${intento} DNI ${dni}:`,
+        e.code || "",
+        e.response ? `HTTP ${e.response.status}` : "",
+        e.message,
+      );
+    }
+  }
+  try {
+    const respaldo = await respaldoAfiliadoSupabase(dni);
+    if (respaldo) {
+      console.warn(`🟡 DNI ${dni} validado por respaldo (${respaldo.fuente})`);
+      return res.json(respaldo);
+    }
+  } catch (e) {
+    console.error("Error respaldo afiliado:", e.message);
+  }
+  res.status(503).json({
+    esActivo: false,
+    error: ultimoError ? ultimoError.message : "sin respuesta",
+    mensaje: "El padrón de IAPOS no responde y el DNI no figura en el tablero del día.",
+  });
 });
 
 // ── GUARDAR ENFERMERÍA ──
