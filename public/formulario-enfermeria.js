@@ -125,9 +125,8 @@ document.addEventListener("DOMContentLoaded", () => {
         mostrarSeccionIndicaciones(dni);
       } else {
         if (result.detail && result.detail.includes("duplicate")) {
-          alert(
-            "⚠️ Ya existe un registro de enfermería para este paciente en el día de hoy.",
-          );
+          // El mensaje real viene del server (hoy la regla es 1 por año)
+          alert("⚠️ " + (result.message || "Este paciente ya tiene un registro de enfermería."));
         } else {
           alert(`Error al guardar los datos: ${result.message}`);
         }
@@ -162,6 +161,17 @@ document.addEventListener("DOMContentLoaded", () => {
       const res = await fetch("/verificar-afiliado/" + dni);
       const data = await res.json();
 
+      // 503 = el padrón de IAPOS no respondió y no hubo respaldo: NO
+      // significa que no sea afiliado, solo que no se pudo verificar.
+      if (res.status === 503) {
+        msgEl.style.cssText =
+          "margin-top:8px; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:500; background:#fffbeb; color:#b45309; border:1px solid #fde68a;";
+        msgEl.innerHTML =
+          '<i class="fas fa-exclamation-triangle" style="margin-right:6px"></i>El padrón de IAPOS no responde: no se pudo verificar la afiliación. Podés continuar con la carga; verificá la afiliación en SIOS si tenés dudas.';
+        cargarAlertasEnfermeria(dni);
+        return;
+      }
+
       if (!data.esActivo) {
         msgEl.style.cssText =
           "margin-top:8px; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:500; background:#fef2f2; color:#dc2626; border:1px solid #fecaca;";
@@ -188,6 +198,19 @@ document.addEventListener("DOMContentLoaded", () => {
         }
       }
       // 2. Alertas clínicas
+      await cargarAlertasEnfermeria(dni);
+    } catch (e) {
+      msgEl.style.cssText =
+        "margin-top:8px; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:500; background:#fffbeb; color:#d97706; border:1px solid #fde68a;";
+      msgEl.innerHTML =
+        '<i class="fas fa-exclamation-triangle" style="margin-right:6px"></i>No se pudo verificar. Continuá o consultá a IAPOS.';
+    }
+  });
+
+  // Alertas clínicas de la hoja de vida / DP anterior (se muestran aunque
+  // el padrón de IAPOS no responda)
+  async function cargarAlertasEnfermeria(dni) {
+    try {
       const alertasRes = await fetch("/alertas-clinicas/" + dni);
       const alertasData = await alertasRes.json();
       const alertas = alertasData.alertas || [];
@@ -233,12 +256,9 @@ document.addEventListener("DOMContentLoaded", () => {
         modal.innerHTML = html;
       }
     } catch (e) {
-      msgEl.style.cssText =
-        "margin-top:8px; padding:10px 14px; border-radius:8px; font-size:13px; font-weight:500; background:#fffbeb; color:#d97706; border:1px solid #fde68a;";
-      msgEl.innerHTML =
-        '<i class="fas fa-exclamation-triangle" style="margin-right:6px"></i>No se pudo verificar. Continuá o consultá a IAPOS.';
+      console.warn("No se pudieron cargar las alertas clínicas:", e.message);
     }
-  });
+  }
   // Muestra el formulario directamente, sin buscar DNI
   form.classList.remove("hidden");
   showStep(0);

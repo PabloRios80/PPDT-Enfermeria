@@ -176,7 +176,7 @@ app.post("/api/enfermeria/guardar", async (req, res) => {
 
     if (existente) {
       return res.status(409).json({
-        message: `Ya existe un registro de enfermería para este paciente en ${anioActual}. Solo se puede cargar uno por año.`,
+        message: `Este paciente ya tiene un registro de enfermería en ${anioActual}${existente.fecha_cierre_enf ? ` (cargado el ${existente.fecha_cierre_enf})` : ""}. Solo se puede cargar uno por año.`,
         detail: "duplicate_year",
       });
     }
